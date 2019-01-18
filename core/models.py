@@ -12,6 +12,8 @@ class Survivor(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
     infected = models.BooleanField(default=False)
+    infected_counter = models.IntegerField(default=0, null=True)
+    flag_survivor = models.CharField(max_length=200, null=True, blank=True)
     
 """
 class LastLocation(models.Model):
@@ -21,7 +23,7 @@ class LastLocation(models.Model):
 """
 
 class Item(models.Model):
-    survivor = models.ForeignKey(Survivor, on_delete="CASCATE", related_name="inventory")
+    survivor = models.ForeignKey(Survivor, on_delete="CASCATE", related_name="inventory", null=True, blank=True)
     ITEMS_TYPE_CHOICES = (
         (4, 'Water'),
         (3, 'Food'),

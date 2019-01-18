@@ -28,6 +28,7 @@ router.register(r'items', views.ItemViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('survivors/<int:pk>/location', views.location_detail),
+    path('survivors/<int:pk>/report', views.flag_survivor),
 
     url(r'^', include(router.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
