@@ -18,14 +18,17 @@ from django.urls import path
 from django.conf.urls import url, include
 from rest_framework import routers
 from core import views
+from rest_framework.urlpatterns import format_suffix_patterns
 
 router = routers.DefaultRouter()
 router.register(r'survivors', views.SurvivorViewSet)
 router.register(r'items', views.ItemViewSet)
-router.register(r'last_location', views.LastLocationViewSet)
+# router.register(r'last_location', views.LastLocationViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('survivors/<int:pk>/location', views.location_detail),
+
     url(r'^', include(router.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 
