@@ -20,7 +20,7 @@ class SurvivorSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Survivor
-        fields = ('url', 'name', 'age', 'gender','latitude', 'longitude', 'infected','inventory')
+        fields = ('url', 'name', 'age', 'gender','latitude', 'longitude','inventory', 'infected', 'infected_counter')
 
 
     def create(self, validated_data):
@@ -28,18 +28,12 @@ class SurvivorSerializer(serializers.HyperlinkedModelSerializer):
         survivor.name = validated_data["name"]
         survivor.age = validated_data["age"]
         survivor.gender = validated_data["gender"]
+        survivor.latitude = validated_data["latitude"]
+        survivor.longitude = validated_data["longitude"]
         survivor.infected = validated_data["infected"]
+        survivor.infected_counter = validated_data["infected_counter"]
         survivor.save()
-
-        """
-        last_location = LastLocation(latitude=validated_data["last_location"]["latitude"],longitude=validated_data["last_location"]["longitude"])
-        last_location.survivor = survivor
-        last_location.save() 
-
-        print(validated_data)
-        """
       
-
         for i in validated_data["inventory"]:
             item = Item()
             item.item_type = i["item_type"]
@@ -50,22 +44,24 @@ class SurvivorSerializer(serializers.HyperlinkedModelSerializer):
 
         return survivor
         
+    '''
     def validate_inventory(self, value):
-        return value
+        return value'''
 
-    """
-    def path(self, instance, validated_data):
-        instance.last_location.latitude = validated_data["last_location"]["latitude"]
-        instance.last_location.longitude = validated_data["last_location"]["longitude"]
-        instance.last_location.save()
-        return instance
-    """
+
 
 class SurvivorLastLocationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Survivor
         fields = ('longitude', 'latitude')
+
+
+class SurvivorFlagSurvivorSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Survivor
+        fields = ('flag_survivor')
 
 
 """

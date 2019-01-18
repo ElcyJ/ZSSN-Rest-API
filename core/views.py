@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from .models import Survivor, Item
 from rest_framework import viewsets
-from .serializers import SurvivorSerializer, ItemSerializer, SurvivorLastLocationSerializer
+from .serializers import SurvivorSerializer, ItemSerializer, SurvivorLastLocationSerializer, SurvivorFlagSurvivorSerializer
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -64,6 +64,34 @@ def location_detail(request, pk, format=None):
 
     elif request.method == 'PUT':
         serializer = SurvivorLastLocationSerializer(survivor, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+def flag_survivor(request, pk, format=None):
+
+    try:
+        survivor = Survivor.objects.get(pk=pk)
+    except Survivor.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == 'PUT':
+        print("kjdnkwdkqwkdkqwdnkqwndkqnkwd")
+        print("banana", request.data)
+        serializer = SurvivorFlagSurvivorSerializer(data=request.data )
+
+        survivor_flagged = Survivor.objects.get(name=request.data['flag_survivor'])
+
+        reports = survivor_flagged.infected_counter + 1
+
+        if reports == 3:
+            survivor_flagged.infected = True
+            survivor_flagged.infected_counter = reports
+        else:
+            survivor_flagged.infected_counter = reports
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
