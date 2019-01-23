@@ -1,7 +1,7 @@
 from django.shortcuts import render
-from .models import Survivor, Item
+from .models import Survivor, Inventory
 from rest_framework import viewsets
-from .serializers import SurvivorSerializer, ItemSerializer, SurvivorLastLocationSerializer, SurvivorFlagSurvivorSerializer
+from .serializers import *
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -12,87 +12,63 @@ from rest_framework.parsers import JSONParser
 from django.views.decorators.csrf import csrf_exempt
 
 
-class SurvivorViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
-    queryset = Survivor.objects.all()# .order_by('-date_joined')
+class SurvivorView(viewsets.ModelViewSet):
+
+    queryset = Survivor.objects.all()
     serializer_class = SurvivorSerializer
 
-    """@csrf_exempt
-    def survivor_update(self, request, pk):
 
-            survivor = Survivor.objects.get(pk=pk)
+class InventoryView(viewsets.ModelViewSet):
 
-            if request.method == 'PUT':
-                data = JSONParser().parse(request)
-                serializer = SurvivorLastLocationSerializer(survivor, data=data)
+    queryset = Inventory.objects.all()
+    serializer_class = InventorySerializer
 
-            if serializer.is_valid():
-                serializer.save()
-                s_serializer = SurvivorSerializer(survivor)
-
-                return JsonResponse(s_serializer.data, status=200)
-
-            return JsonResponse(serializer.errors, status=400)"""
-
-
-class ItemViewSet(viewsets.ModelViewSet):
-    
-   
-    
-    queryset = Item.objects.all()
-    serializer_class = ItemSerializer
-"""
-class LastLocationViewSet(viewsets.ModelViewSet):
-    
-    queryset = LastLocation.objects.all()
+class LastLocationView(viewsets.ModelViewSet):
     serializer_class = LastLocationSerializer
-"""
 
-@api_view(['GET', 'PUT'])
-def location_detail(request, pk, format=None):
-    
-    try:
-        survivor = Survivor.objects.get(pk=pk)
-    except Survivor.DoesNotExist:
+    def get_queryset(self):
+        return None
+
+    def list(self, request):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    if request.method == 'GET':
-        serializer = SurvivorLastLocationSerializer(survivor)
-        return Response(serializer.data)
+    def create(self, request, pk=None):
+        last_location_serializer = LastLocationSerializer(data=request.data)
+        if last_location_serializer.is_valid():
+            try:
+                survivor = Survivor.objects.get(pk = last_location_serializer.data['survivor_id'])
+                if(survivor):
+                    last_location = LastLocation()
+                    last_location.latitude = last_location_serializer.data['latitude']
+                    last_location.longitude = last_location_serializer.data['longitude']
+                    last_location.survivor = survivor
+                    last_location.save()
+                    return Response({'status': 'location_updated'})
+            except:
+                return Response({'error':'survivor not found'},
+                    status=status.HTTP_400_BAD_REQUEST)
+            
+          
+        return Response(last_location_serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'PUT':
-        serializer = SurvivorLastLocationSerializer(survivor, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class FlagSurvivorView(viewsets.ModelViewSet):
+    serializer_class = FlagSurvivorSerializer
 
-@api_view(['PUT'])
-def flag_survivor(request, pk, format=None):
+    def get_queryset(self):
+        return  FlagSurvivor.objects.all()
 
-    try:
-        survivor = Survivor.objects.get(pk=pk)
-    except Survivor.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-    
-    if request.method == 'PUT':
-        print("kjdnkwdkqwkdkqwdnkqwndkqnkwd")
-        print("banana", request.data)
-        serializer = SurvivorFlagSurvivorSerializer(data=request.data )
-
-        survivor_flagged = Survivor.objects.get(name=request.data['flag_survivor'])
-
-        reports = survivor_flagged.infected_counter + 1
-
-        if reports == 3:
-            survivor_flagged.infected = True
-            survivor_flagged.infected_counter = reports
-        else:
-            survivor_flagged.infected_counter = reports
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def create(self, request, pk=None):
+        flag_serializer = FlagSurvivorSerializer(data=request.data)
+        if flag_serializer.is_valid():
+            try:
+                target = Survivor.objects.get(pk = flag_serializer.data['target_id'])
+                author = Survivor.objects.get(pk = flag_serializer.data['author_id'])              
+                flag = FlagSurvivor()
+                flag.target = target
+                flag.author = author
+                flag.save()
+                return Response({'status': 'survivor flagged as infected successfuly'})
+            except:
+                return Response({'error':'survivor not found'},
+                    status=status.HTTP_400_BAD_REQUEST)

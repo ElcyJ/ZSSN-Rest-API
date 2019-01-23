@@ -1,81 +1,60 @@
 from .models import *
-from .serializers import *
 from rest_framework import serializers
 
-"""
-class LastLocationSerializer(serializers.HyperlinkedModelSerializer):
+
+class LastLocationSerializer(serializers.Serializer):
+    survivor_id = serializers.IntegerField()
+    latitude = serializers.FloatField()
+    longitude = serializers.FloatField() 
+
+class LastLocationSerializerModel(serializers.ModelSerializer):
+
     class Meta:
         model = LastLocation
-        fields = ('url','latitude', 'longitude', 'survivor')
-"""
-        
-class ItemSerializer(serializers.HyperlinkedModelSerializer):
+        fields = ('latitude', 'longitude')
+        extra_kwargs = {'survivor': {'read_only' : True}}
+
+class InventorySerializer(serializers.HyperlinkedModelSerializer):
+    
     class Meta:
-        model = Item
-        fields = ('url', 'item_type', 'quantity', 'survivor')
+        model = Inventory
+        fields = ('url', 'survivor', 'water', 'food', 'medication', 'ammunition', 'value')
+        extra_kwargs = {'value': {'read_only' : True}, 'survivor': {'read_only' : True}}
 
 class SurvivorSerializer(serializers.HyperlinkedModelSerializer):
-    inventory = ItemSerializer(many=True)
-    # last_location = LastLocationSerializer()
+    inventory = InventorySerializer(many=False)
+    last_location = LastLocationSerializerModel(many=False)
 
     class Meta:
         model = Survivor
-        fields = ('url', 'name', 'age', 'gender','latitude', 'longitude','inventory', 'infected', 'infected_counter')
-
+        fields = ('url', 'name', 'age', 'gender', 'inventory', 'infected', 'infected_flags', 'last_location')
+        extra_kwargs = {'flag_counter':{'read_only' : True}, 'infected': {'read_only' : True} }
 
     def create(self, validated_data):
         survivor = Survivor()
         survivor.name = validated_data["name"]
         survivor.age = validated_data["age"]
         survivor.gender = validated_data["gender"]
-        survivor.latitude = validated_data["latitude"]
-        survivor.longitude = validated_data["longitude"]
-        survivor.infected = validated_data["infected"]
-        survivor.infected_counter = validated_data["infected_counter"]
+        last_location = LastLocation()
+        survivor.last_location = last_location
+        survivor.last_location.latitude = validated_data["last_location"]["latitude"] 
+        survivor.last_location.longitude = validated_data["last_location"]["longitude"]
         survivor.save()
-      
-        for i in validated_data["inventory"]:
-            item = Item()
-            item.item_type = i["item_type"]
-            item.quantity = i["quantity"]
-            item.survivor = survivor
-            item.save()
-        survivor.save()
-
+        inventory = Inventory()
+        survivor.inventory = inventory
+        inventory.water = validated_data["inventory"]["water"]
+        inventory.food = validated_data["inventory"]["food"]
+        inventory.medication = validated_data["inventory"]["medication"]
+        inventory.ammunition = validated_data["inventory"]["ammunition"]
+        inventory.survivor = survivor
+        inventory.save()
         return survivor
-        
-    '''
-    def validate_inventory(self, value):
-        return value'''
+
+class FlagSurvivorSerializer(serializers.Serializer):
+    target_id = serializers.IntegerField()
+    author_id = serializers.IntegerField()
 
 
-
-class SurvivorLastLocationSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Survivor
-        fields = ('longitude', 'latitude')
-
-
-class SurvivorFlagSurvivorSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Survivor
-        fields = ('flag_survivor')
-
-
-"""
-class UpdateLocationSerializer(serializers.HyperlinkedModelSerializer):
-
-    class Meta:
-        model = Survivor
-        fields = ('url', 'last_location')
-
-    def update(self, instance, validated_data):
-        instance.last_location.latitude = validated_data["last_location"]["latitude"]
-        instance.last_location.longitude = validated_data["last_location"]["longitude"]
-        instance.last_location.save()
-"""
 
     
     
