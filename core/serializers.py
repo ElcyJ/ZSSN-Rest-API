@@ -4,8 +4,8 @@ from rest_framework import serializers
 
 class LastLocationSerializer(serializers.Serializer):
     survivor_id = serializers.IntegerField()
-    latitude = serializers.FloatField()
-    longitude = serializers.FloatField() 
+    latitude = serializers.DecimalField(max_digits=20, decimal_places=10)
+    longitude = serializers.DecimalField(max_digits=20, decimal_places=10)
 
 class LastLocationSerializerModel(serializers.ModelSerializer):
 
@@ -35,24 +35,38 @@ class SurvivorSerializer(serializers.HyperlinkedModelSerializer):
         survivor.name = validated_data["name"]
         survivor.age = validated_data["age"]
         survivor.gender = validated_data["gender"]
-        last_location = LastLocation()
-        survivor.last_location = last_location
-        survivor.last_location.latitude = validated_data["last_location"]["latitude"] 
-        survivor.last_location.longitude = validated_data["last_location"]["longitude"]
         survivor.save()
+        last_location = LastLocation()
+        last_location.survivor = survivor
+        last_location.latitude = validated_data["last_location"]["latitude"] 
+        last_location.longitude = validated_data["last_location"]["longitude"]
+        last_location.save()
+        
         inventory = Inventory()
-        survivor.inventory = inventory
         inventory.water = validated_data["inventory"]["water"]
         inventory.food = validated_data["inventory"]["food"]
         inventory.medication = validated_data["inventory"]["medication"]
         inventory.ammunition = validated_data["inventory"]["ammunition"]
         inventory.survivor = survivor
         inventory.save()
+ 
         return survivor
 
 class FlagSurvivorSerializer(serializers.Serializer):
     target_id = serializers.IntegerField()
     author_id = serializers.IntegerField()
+
+class TradeSerializer(serializers.Serializer):
+    sendder_id = serializers.IntegerField()
+    reciever_id = serializers.IntegerField()
+    send_water = serializers.IntegerField()
+    send_food = serializers.IntegerField()
+    send_medication = serializers.IntegerField()
+    send_ammunition = serializers.IntegerField()
+    recieve_water = serializers.IntegerField()
+    recieve_food = serializers.IntegerField()
+    recieve_medication = serializers.IntegerField()
+    recieve_ammunition = serializers.IntegerField()
 
 
 
